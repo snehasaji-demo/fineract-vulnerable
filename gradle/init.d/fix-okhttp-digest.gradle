@@ -1,0 +1,14 @@
+allprojects { proj ->
+    proj.buildscript {
+        repositories {
+            mavenCentral()
+        }
+        configurations.classpath {
+            resolutionStrategy.dependencySubstitution {
+                substitute(module("com.burgstaller:okhttp-digest:1.10"))
+                    .using(module("io.github.rburgst:okhttp-digest:2.5"))
+                    .because("com.burgstaller:okhttp-digest:1.10 was removed upstream; project moved to io.github.rburgst")
+            }
+        }
+    }
+}
