@@ -22,15 +22,13 @@ import java.net.HttpURLConnection;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 @SuppressWarnings("unused")
 public final class TrustModifier {
@@ -61,7 +59,11 @@ public final class TrustModifier {
 
         if (factory == null) {
             final SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[] { new AlwaysTrustManager() }, null);
+            // Initialize TrustManagerFactory with default KeyStore (system's cacerts)
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((java.security.KeyStore) null);
+            TrustManager[] trustManagers = tmf.getTrustManagers();
+            ctx.init(null, trustManagers, null);
             factory = ctx.getSocketFactory();
         }
         return factory;
@@ -72,20 +74,6 @@ public final class TrustModifier {
         @Override
         public boolean verify(final String hostname, final SSLSession session) {
             return true;// NOSONAR
-        }
-    }
-
-    private static final class AlwaysTrustManager implements X509TrustManager {
-
-        @Override
-        public void checkClientTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException {}// NOSONAR
-
-        @Override
-        public void checkServerTrusted(final X509Certificate[] arg0, final String arg1) throws CertificateException {}// NOSONAR
-
-        @Override
-        public X509Certificate[] getAcceptedIssuers() {
-            return null;
         }
     }
 }
