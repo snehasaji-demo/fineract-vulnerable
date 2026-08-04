@@ -52,7 +52,8 @@ public final class TrustModifier {
             final HttpsURLConnection httpsConnection = (HttpsURLConnection) conn;
             final SSLSocketFactory factory = prepFactory(httpsConnection);
             httpsConnection.setSSLSocketFactory(factory);
-            httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
+            // Removed the line below to enforce default hostname verification, addressing CWE-295.
+            // httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
         }
     }
 
@@ -61,7 +62,8 @@ public final class TrustModifier {
 
         if (factory == null) {
             final SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[] { new AlwaysTrustManager() }, null);
+            // Changed the line below to use default TrustManagers, addressing CWE-295.
+            ctx.init(null, null, null); // Use default TrustManagers to enforce proper certificate validation
             factory = ctx.getSocketFactory();
         }
         return factory;
