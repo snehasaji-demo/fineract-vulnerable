@@ -20,7 +20,7 @@ package org.apache.fineract.template.service;
 
 import java.net.HttpURLConnection;
 import java.security.KeyManagementException;
-import java.security.KeyStoreException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -30,6 +30,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 @SuppressWarnings("unused")
@@ -52,7 +53,8 @@ public final class TrustModifier {
             final HttpsURLConnection httpsConnection = (HttpsURLConnection) conn;
             final SSLSocketFactory factory = prepFactory(httpsConnection);
             httpsConnection.setSSLSocketFactory(factory);
-            httpsConnection.setHostnameVerifier(TRUSTING_HOSTNAME_VERIFIER);
+            // Removed explicit setting of TrustingHostnameVerifier to use default secure hostname verification.
+            // The default HttpsURLConnection hostname verifier performs proper validation.
         }
     }
 
@@ -61,7 +63,11 @@ public final class TrustModifier {
 
         if (factory == null) {
             final SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[] { new AlwaysTrustManager() }, null);
+            // Initialize TrustManagerFactory to use the default system trust store
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null); // Use null to initialize with the default system KeyStore
+            TrustManager[] trustManagers = tmf.getTrustManagers();
+            ctx.init(null, trustManagers, null); // Use the default trust managers for secure certificate validation
             factory = ctx.getSocketFactory();
         }
         return factory;
