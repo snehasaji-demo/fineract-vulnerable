@@ -1,4 +1,4 @@
-    /**
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -53,6 +53,7 @@ buildscript {
     }
     repositories {
         maven { url 'https://plugins.gradle.org/m2/' }
+        mavenCentral()
     }
 
     dependencies {
@@ -63,6 +64,13 @@ buildscript {
         classpath 'org.apache.commons:commons-lang3:3.14.0'
         classpath 'io.swagger.core.v3:swagger-jaxrs2-jakarta:2.2.19'
         classpath 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    }
+
+    configurations.classpath.resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'com.burgstaller' && details.requested.name == 'okhttp-digest') {
+            details.useTarget 'io.github.rburgst:okhttp-digest:2.5'
+            details.because 'com.burgstaller:okhttp-digest:1.10 removed upstream'
+        }
     }
 }
 
