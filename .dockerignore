@@ -4,6 +4,7 @@
 **/bin/*
 
 *.jar
+!gradle-wrapper.jar
 *.war
 
 # Incremental "docker build" is faster if we can modify the Dockerfile
