@@ -60,7 +60,7 @@ public final class TrustModifier {
             throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
 
         if (factory == null) {
-            final SSLContext ctx = SSLContext.getInstance("TLS");
+            final SSLContext ctx = SSLContext.getInstance("TLSv1.2");
             ctx.init(null, new TrustManager[] { new AlwaysTrustManager() }, null);
             factory = ctx.getSocketFactory();
         }
