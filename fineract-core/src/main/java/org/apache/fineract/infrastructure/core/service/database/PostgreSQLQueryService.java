@@ -22,6 +22,7 @@ import static java.lang.String.format;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,10 +33,18 @@ import org.springframework.stereotype.Component;
 public class PostgreSQLQueryService implements DatabaseQueryService {
 
     private final DatabaseTypeResolver databaseTypeResolver;
+    private static final Pattern TABLE_NAME_PATTERN = Pattern.compile("^[a-zA-Z_][a-zA-Z0-9_]*$");
 
     @Autowired
     public PostgreSQLQueryService(DatabaseTypeResolver databaseTypeResolver) {
         this.databaseTypeResolver = databaseTypeResolver;
+    }
+
+    private String validateTableName(String tableName) {
+        if (tableName == null || !TABLE_NAME_PATTERN.matcher(tableName).matches()) {
+            throw new IllegalArgumentException("Invalid table name: " + tableName);
+        }
+        return tableName;
     }
 
     @Override
@@ -46,35 +55,38 @@ public class PostgreSQLQueryService implements DatabaseQueryService {
     @Override
     public boolean isTablePresent(DataSource dataSource, String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        String validatedTableName = validateTableName(tableName);
         Integer result = jdbcTemplate.queryForObject(format("SELECT COUNT(table_name) " + "FROM information_schema.tables "
-                + "WHERE table_schema = 'public' " + "AND table_name = '%s';", tableName), Integer.class);
+                + "WHERE table_schema = 'public' " + "AND table_name = '%s';", validatedTableName), Integer.class);
         return Objects.equals(result, 1);
     }
 
     @Override
     public SqlRowSet getTableColumns(DataSource dataSource, String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        String validatedTableName = validateTableName(tableName);
         String sql = "SELECT column_name, is_nullable, data_type,"
                 + " coalesce(character_maximum_length, numeric_precision, datetime_precision) AS max_length, ordinal_position = 1 AS column_key"
                 + " FROM information_schema.columns WHERE table_catalog = current_catalog AND table_schema = current_schema AND table_name = '"
-                + tableName + "' ORDER BY ordinal_position";
+                + validatedTableName + "' ORDER BY ordinal_position";
         final SqlRowSet columnDefinitions = jdbcTemplate.queryForRowSet(sql); // NOSONAR
         if (columnDefinitions.next()) {
             return columnDefinitions;
         } else {
-            throw new IllegalArgumentException("Table " + tableName + " is not found");
+            throw new IllegalArgumentException("Table " + validatedTableName + " is not found");
         }
     }
 
     @Override
     public List<IndexDetail> getTableIndexes(DataSource dataSource, String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        String sql = "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = '" + tableName + "'";
+        String validatedTableName = validateTableName(tableName);
+        String sql = "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = '" + validatedTableName + "'";
         final SqlRowSet indexDefinitions = jdbcTemplate.queryForRowSet(sql); // NOSONAR
         if (indexDefinitions.next()) {
             return DatabaseIndexMapper.getIndexDetails(indexDefinitions);
         } else {
-            throw new IllegalArgumentException("Table " + tableName + " is not found");
+            throw new IllegalArgumentException("Table " + validatedTableName + " is not found");
         }
     }
 }
