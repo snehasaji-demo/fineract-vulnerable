@@ -13,14 +13,11 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
-# under the License.
-#
-
-
-apiVersion: v1
+# under the License.\n#\n\n\napiVersion: v1
 kind: ConfigMap
 metadata:
   name: fineractmysql-initdb
+  namespace: fineract # Added to specify a non-default namespace
   labels:
     app: fineract-server
 data:
